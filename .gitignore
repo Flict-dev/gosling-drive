@@ -23,7 +23,7 @@ env/
 .DS_Store
 
 # Docker / local runtime data
-storage/
+/storage/
 minio_data/
 postgres_data/
 
