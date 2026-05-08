@@ -22,6 +22,22 @@ env/
 .vscode/
 .DS_Store
 
+# Code agent / AI tooling
+.agents/
+.codex/
+skills-lock.json
+AGENTS.md
+CLAUDE.md
+.claude/
+.cursor/
+.cursorrules
+.windsurf/
+.continue/
+.aider*
+.augment/
+.roo/
+.kilocode/
+
 # Docker / local runtime data
 /storage/
 minio_data/
