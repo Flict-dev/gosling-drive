@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="topbar">
+  <div>
+    <p class="eyebrow">Gosling Drive</p>
+    <h1>Публичная ссылка</h1>
+  </div>
+</section>
+
+<section class="panel">
+  <button id="downloadButton">Скачать файл</button>
+  <p id="shareStatus" class="status"></p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = "{{ token }}";
+const button = document.querySelector("#downloadButton");
+const statusNode = document.querySelector("#shareStatus");
+
+button.addEventListener("click", async () => {
+  statusNode.textContent = "Подготовка ссылки...";
+  const response = await fetch(`/api/public/${token}`);
+  const payload = await response.json();
+  if (!response.ok) {
+    statusNode.textContent = payload.detail || "Ссылка недоступна";
+    return;
+  }
+  window.location.href = payload.url;
+  statusNode.textContent = "Ссылка создана";
+});
+</script>
+{% endblock %}
+
