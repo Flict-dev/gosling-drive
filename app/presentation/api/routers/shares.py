@@ -15,6 +15,12 @@ from app.presentation.api.dependencies import get_current_user
 router = APIRouter(prefix="/shares", tags=["shares"])
 
 
+@router.post(
+    "",
+    response_model=ShareLinkRead,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+)
 @router.post("/", response_model=ShareLinkRead, status_code=status.HTTP_201_CREATED)
 def create_share_link(
     payload: ShareLinkCreate,
@@ -50,6 +56,7 @@ def create_share_link(
     return share_link
 
 
+@router.get("", response_model=list[ShareLinkRead], include_in_schema=False)
 @router.get("/", response_model=list[ShareLinkRead])
 def list_share_links(
     db: Session = Depends(get_db),

@@ -12,6 +12,7 @@ from app.presentation.api.dependencies import get_current_user
 router = APIRouter(prefix="/folders", tags=["folders"])
 
 
+@router.get("", response_model=list[FolderRead], include_in_schema=False)
 @router.get("/", response_model=list[FolderRead])
 def list_folders(
     parent_id: str | None = None,
@@ -27,6 +28,12 @@ def list_folders(
     )
 
 
+@router.post(
+    "",
+    response_model=FolderRead,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+)
 @router.post("/", response_model=FolderRead, status_code=status.HTTP_201_CREATED)
 def create_folder(
     payload: FolderCreate,

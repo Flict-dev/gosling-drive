@@ -210,9 +210,22 @@ def test_auth_file_share_and_version_upload_flow(api_client) -> None:
     assert versions_response.status_code == 200
     assert [item["version_number"] for item in versions_response.json()] == [1, 2]
 
+    first_version_download_response = client.get(
+        f"/api/files/{file_id}/versions/1/download-url",
+        headers=auth(token),
+    )
+    assert first_version_download_response.status_code == 200
+    assert first_version_download_response.json()["url"].startswith(
+        "https://storage.test/download/"
+    )
+
     stats_response = client.get("/api/files/stats/me", headers=auth(token))
     assert stats_response.status_code == 200
     assert stats_response.json() == {"files_count": 1, "total_size_bytes": 24}
+
+    storage_stats_response = client.get("/api/storage/stats", headers=auth(token))
+    assert storage_stats_response.status_code == 200
+    assert storage_stats_response.json() == {"files_count": 1, "total_size_bytes": 24}
     assert [item["upload_id"] for item in fake_storage.completed_uploads] == [
         "upload-1",
         "upload-2",

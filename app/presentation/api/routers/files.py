@@ -33,6 +33,7 @@ from app.presentation.api.routers.uploads import initiate_upload, initiate_versi
 router = APIRouter(prefix="/files", tags=["files"])
 
 
+@router.get("", response_model=list[FileRead], include_in_schema=False)
 @router.get("/", response_model=list[FileRead])
 def list_files(
     folder_id: str | None = None,
@@ -171,6 +172,40 @@ def list_versions(
 ) -> list[FileVersionModel]:
     file = ensure_readable_file(db, file_id, current_user)
     return sorted(file.versions, key=lambda version: version.version_number)
+
+
+@router.get("/{file_id}/versions/{version_number}/download-url", response_model=FileDownloadUrl)
+def get_version_download_url(
+    file_id: str,
+    version_number: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+) -> FileDownloadUrl:
+    file = ensure_readable_file(db, file_id, current_user)
+    if file.status == FileStatus.DELETED.value:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+    version = db.scalar(
+        select(FileVersionModel).where(
+            FileVersionModel.file_id == file.id,
+            FileVersionModel.version_number == version_number,
+        )
+    )
+    if version is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File version not found")
+
+    write_audit(
+        db,
+        user_id=current_user.id,
+        action="file_version_download_url",
+        resource_type="file_version",
+        resource_id=version.id,
+        metadata={"file_id": file.id, "version_number": version.version_number},
+    )
+    db.commit()
+    return FileDownloadUrl(
+        url=storage.presign_download(version.object_key, file.name),
+        expires_in_seconds=settings.s3_presigned_expire_seconds,
+    )
 
 
 @router.get("/stats/me", response_model=StorageStats)
