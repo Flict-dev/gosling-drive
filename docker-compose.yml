@@ -14,6 +14,21 @@ services:
     volumes:
       - .:/app
 
+  frontend:
+    image: node:20-alpine
+    container_name: gosling-drive-frontend
+    working_dir: /app
+    environment:
+      BACKEND_INTERNAL_URL: "http://backend:8000"
+    command: sh -c "npm install --no-audit --no-fund && npm run dev"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+
   postgres:
     image: postgres:16-alpine
     container_name: gosling-drive-postgres
@@ -38,7 +53,7 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:8000,http://127.0.0.1:8000"
+      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:3000,http://127.0.0.1:3000"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -62,3 +77,4 @@ services:
 volumes:
   postgres16_data:
   minio_data:
+  frontend_node_modules:

@@ -17,5 +17,9 @@ storage
 minio_data
 postgres_data
 
+frontend/node_modules
+frontend/.next
+frontend/out
+
 *.docx
 ~$*
