@@ -1,0 +1,185 @@
+{
+  "owner_email": "report.owner.1778270487@example.com",
+  "reader_email": "report.reader.1778270487@example.com",
+  "password": "Password123!",
+  "owner_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlNDM3ODUxNC0yNzI5LTQ5YzUtODE2Yy1hNTg5ZWNmYzQyNTQiLCJleHAiOjE3NzgzNTY4ODd9.FEtZUvFPdbL3h5DeiHNsqg88QXH5W53_Fe5PsMsya64",
+  "reader_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMmRhNjE0OC1iNWY2LTQ4MmQtYjZlZi01MTkxZWI5Yjk4NjciLCJleHAiOjE3NzgzNTY4ODh9.W-BMqAdjI3wdC1Rnn5LAT_eqtT9NQfMXTHgCOC8oB50",
+  "files": [
+    {
+      "session": {
+        "upload_session_id": "02468fea-7b3f-4cb6-8622-34aa60e31913",
+        "file_id": "057d8e59-f3f3-479d-a9c5-7e4171f89bb7",
+        "provider_upload_id": "YmRjYWM2NTYtNjIzOS00YWVlLWExNDctZGFlNjU3MDAyYzNiLmUyYWU3NmMzLWYwYWUtNGU4Ni05YTI1LTViYTk5YmRmMWM0MXgxNzc4MjcwNDg4MDIzMDc4OTI4",
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/36aa6aaa-b889-4c20-a8d9-378ed25a7500/coursework-report.txt",
+        "target_version_number": 1,
+        "part_size": 16777216,
+        "total_parts": 1
+      },
+      "file": {
+        "id": "057d8e59-f3f3-479d-a9c5-7e4171f89bb7",
+        "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+        "folder_id": null,
+        "name": "coursework-report.txt",
+        "content_type": "text/plain",
+        "size_bytes": 118,
+        "checksum_sha256": null,
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/36aa6aaa-b889-4c20-a8d9-378ed25a7500/coursework-report.txt",
+        "status": "ready",
+        "current_version_number": 1,
+        "created_at": "2026-05-08T20:01:28.025376Z",
+        "updated_at": "2026-05-08T20:01:28.044863Z"
+      },
+      "version_session": {
+        "upload_session_id": "c5eb031b-b7b8-47e5-ba35-41acf46c8281",
+        "file_id": "057d8e59-f3f3-479d-a9c5-7e4171f89bb7",
+        "provider_upload_id": "YmRjYWM2NTYtNjIzOS00YWVlLWExNDctZGFlNjU3MDAyYzNiLmRjZmQ2YjM2LTA1MmQtNGFjNy1hN2FmLWFkYzEyMTc3OTNmNHgxNzc4MjcwNDg4MTAwMTYzMDI1",
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/5c63e91a-f649-42fe-8c9c-d1ffc33c29fa/coursework-report.txt",
+        "target_version_number": 2,
+        "part_size": 16777216,
+        "total_parts": 1
+      },
+      "file_after_version": {
+        "id": "057d8e59-f3f3-479d-a9c5-7e4171f89bb7",
+        "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+        "folder_id": null,
+        "name": "coursework-report.txt",
+        "content_type": "text/plain",
+        "size_bytes": 120,
+        "checksum_sha256": null,
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/5c63e91a-f649-42fe-8c9c-d1ffc33c29fa/coursework-report.txt",
+        "status": "ready",
+        "current_version_number": 2,
+        "created_at": "2026-05-08T20:01:28.025376Z",
+        "updated_at": "2026-05-08T20:01:28.116591Z"
+      }
+    },
+    {
+      "session": {
+        "upload_session_id": "b8c952ad-f1ea-4ec5-911a-f94268f0eb0b",
+        "file_id": "c9c2af0c-6ed0-469d-9e6d-8f7130076962",
+        "provider_upload_id": "YmRjYWM2NTYtNjIzOS00YWVlLWExNDctZGFlNjU3MDAyYzNiLjdjOWYzNDA1LWVlYTEtNDJmYy1hNTY1LWQ4YmVkMzk3YjQ1ZHgxNzc4MjcwNDg4MDU0OTUzNjU0",
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/0a4509e7-cb33-4d62-aa7f-901f158c4326/api-requirements.md",
+        "target_version_number": 1,
+        "part_size": 16777216,
+        "total_parts": 1
+      },
+      "file": {
+        "id": "c9c2af0c-6ed0-469d-9e6d-8f7130076962",
+        "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+        "folder_id": null,
+        "name": "api-requirements.md",
+        "content_type": "text/markdown",
+        "size_bytes": 112,
+        "checksum_sha256": null,
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/0a4509e7-cb33-4d62-aa7f-901f158c4326/api-requirements.md",
+        "status": "ready",
+        "current_version_number": 1,
+        "created_at": "2026-05-08T20:01:28.056554Z",
+        "updated_at": "2026-05-08T20:01:28.073160Z"
+      }
+    },
+    {
+      "session": {
+        "upload_session_id": "f06488ed-7e95-41f5-903e-8c36468732d7",
+        "file_id": "4e8e55ae-67f2-48c3-b38d-9c364ae9a017",
+        "provider_upload_id": "YmRjYWM2NTYtNjIzOS00YWVlLWExNDctZGFlNjU3MDAyYzNiLjFmOGIxZWMxLTQxNjgtNDI4NC05MDkzLWI2MTIwMjRhOWY1OHgxNzc4MjcwNDg4MDc4OTc4MTY2",
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/babb7946-d8ad-49be-bf50-5246975fb99f/storage-plan.csv",
+        "target_version_number": 1,
+        "part_size": 16777216,
+        "total_parts": 1
+      },
+      "file": {
+        "id": "4e8e55ae-67f2-48c3-b38d-9c364ae9a017",
+        "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+        "folder_id": null,
+        "name": "storage-plan.csv",
+        "content_type": "text/csv",
+        "size_bytes": 71,
+        "checksum_sha256": null,
+        "bucket": "gosling-drive",
+        "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/babb7946-d8ad-49be-bf50-5246975fb99f/storage-plan.csv",
+        "status": "ready",
+        "current_version_number": 1,
+        "created_at": "2026-05-08T20:01:28.080236Z",
+        "updated_at": "2026-05-08T20:01:28.094261Z"
+      }
+    }
+  ],
+  "share": {
+    "id": "a12d3d84-7345-40a7-a38e-ef12627d831b",
+    "file_id": "057d8e59-f3f3-479d-a9c5-7e4171f89bb7",
+    "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+    "token": "1SYMqBtvZA6keRXTYfOIlB-_NUiS8bxOLSOP1NGhCA8",
+    "is_active": true,
+    "expires_at": null,
+    "max_downloads": 5,
+    "download_count": 0,
+    "created_at": "2026-05-08T20:01:28.121602Z"
+  },
+  "grant": {
+    "id": "aaf2a37c-aaaf-41b5-b244-0a4d40694c02",
+    "file_id": "c9c2af0c-6ed0-469d-9e6d-8f7130076962",
+    "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+    "grantee_id": "12da6148-b5f6-482d-b6ef-5191eb9b9867",
+    "permission": "read"
+  },
+  "stats": {
+    "files_count": 3,
+    "total_size_bytes": 303
+  },
+  "file_list": [
+    {
+      "id": "4e8e55ae-67f2-48c3-b38d-9c364ae9a017",
+      "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+      "folder_id": null,
+      "name": "storage-plan.csv",
+      "content_type": "text/csv",
+      "size_bytes": 71,
+      "checksum_sha256": null,
+      "bucket": "gosling-drive",
+      "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/babb7946-d8ad-49be-bf50-5246975fb99f/storage-plan.csv",
+      "status": "ready",
+      "current_version_number": 1,
+      "created_at": "2026-05-08T20:01:28.080236Z",
+      "updated_at": "2026-05-08T20:01:28.094261Z"
+    },
+    {
+      "id": "c9c2af0c-6ed0-469d-9e6d-8f7130076962",
+      "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+      "folder_id": null,
+      "name": "api-requirements.md",
+      "content_type": "text/markdown",
+      "size_bytes": 112,
+      "checksum_sha256": null,
+      "bucket": "gosling-drive",
+      "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/0a4509e7-cb33-4d62-aa7f-901f158c4326/api-requirements.md",
+      "status": "ready",
+      "current_version_number": 1,
+      "created_at": "2026-05-08T20:01:28.056554Z",
+      "updated_at": "2026-05-08T20:01:28.073160Z"
+    },
+    {
+      "id": "057d8e59-f3f3-479d-a9c5-7e4171f89bb7",
+      "owner_id": "e4378514-2729-49c5-816c-a589ecfc4254",
+      "folder_id": null,
+      "name": "coursework-report.txt",
+      "content_type": "text/plain",
+      "size_bytes": 120,
+      "checksum_sha256": null,
+      "bucket": "gosling-drive",
+      "object_key": "users/e4378514-2729-49c5-816c-a589ecfc4254/5c63e91a-f649-42fe-8c9c-d1ffc33c29fa/coursework-report.txt",
+      "status": "ready",
+      "current_version_number": 2,
+      "created_at": "2026-05-08T20:01:28.025376Z",
+      "updated_at": "2026-05-08T20:01:28.116591Z"
+    }
+  ],
+  "created_at": 1778270487
+}
