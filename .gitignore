@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Docker / local runtime data
+storage/
+minio_data/
+postgres_data/
+
+# Office temporary lock files
+~$*
