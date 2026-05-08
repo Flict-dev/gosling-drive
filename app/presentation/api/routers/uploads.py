@@ -14,6 +14,7 @@ from app.application.schemas.uploads import (
     UploadPartUrlRequest,
     UploadPartUrlResponse,
     UploadSessionRead,
+    UploadVersionInitiateRequest,
 )
 from app.application.services.audit import write_audit
 from app.application.services.object_keys import build_object_key
@@ -34,14 +35,21 @@ from app.presentation.api.dependencies import get_current_user
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
 
-@router.post("/initiate", response_model=UploadInitiateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/initiate",
+    response_model=UploadInitiateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def initiate_upload(
     payload: UploadInitiateRequest,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
 ) -> UploadInitiateResponse:
     if payload.size_bytes > settings.max_upload_size:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File is too big")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File is too big",
+        )
     if payload.folder_id:
         folder = db.get(FolderModel, payload.folder_id)
         if folder is None or folder.owner_id != current_user.id:
@@ -78,16 +86,16 @@ def initiate_upload(
     db.add(file)
     db.flush()
 
-    upload_session = UploadSessionModel(
-        file_id=file.id,
+    upload_session = create_upload_session(
+        file=file,
         owner_id=current_user.id,
         provider_upload_id=provider_upload_id,
-        bucket=settings.s3_bucket_name,
         object_key=object_key,
-        part_size=settings.upload_part_size,
+        target_version_number=1,
+        content_type=payload.content_type,
+        size_bytes=payload.size_bytes,
+        checksum_sha256=payload.checksum_sha256,
         total_parts=total_parts,
-        status=UploadStatus.ACTIVE.value,
-        expires_at=utcnow() + timedelta(hours=24),
     )
     db.add(upload_session)
     write_audit(
@@ -100,15 +108,54 @@ def initiate_upload(
     )
     db.commit()
 
-    return UploadInitiateResponse(
-        upload_session_id=upload_session.id,
-        file_id=file.id,
+    return upload_initiate_response(upload_session)
+
+
+def initiate_version_upload(
+    file: FileModel,
+    payload: UploadVersionInitiateRequest,
+    db: Session,
+    current_user: UserModel,
+) -> UploadInitiateResponse:
+    if payload.size_bytes > settings.max_upload_size:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File is too big",
+        )
+    if file.status != FileStatus.READY.value:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="File is not ready")
+
+    target_version_number = file.current_version_number + 1
+    object_key = build_object_key(file.owner_id, file.name)
+    provider_upload_id = storage.create_multipart_upload(object_key, payload.content_type)
+    total_parts = math.ceil(payload.size_bytes / settings.upload_part_size)
+
+    upload_session = create_upload_session(
+        file=file,
+        owner_id=current_user.id,
         provider_upload_id=provider_upload_id,
-        bucket=settings.s3_bucket_name,
         object_key=object_key,
-        part_size=settings.upload_part_size,
+        target_version_number=target_version_number,
+        content_type=payload.content_type,
+        size_bytes=payload.size_bytes,
+        checksum_sha256=payload.checksum_sha256,
         total_parts=total_parts,
     )
+    db.add(upload_session)
+    write_audit(
+        db,
+        user_id=current_user.id,
+        action="version_upload_initiate",
+        resource_type="file",
+        resource_id=file.id,
+        metadata={
+            "version_number": target_version_number,
+            "size_bytes": payload.size_bytes,
+        },
+    )
+    db.commit()
+
+    return upload_initiate_response(upload_session)
 
 
 @router.post("/{upload_session_id}/parts", response_model=UploadPartUrlResponse)
@@ -150,6 +197,8 @@ def complete_upload(
     file = db.get(FileModel, upload_session.file_id)
     if file is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+    if file.status == FileStatus.DELETED.value:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="File was deleted")
 
     etag = storage.complete_multipart_upload(
         upload_session.object_key,
@@ -159,16 +208,21 @@ def complete_upload(
     upload_session.status = UploadStatus.COMPLETED.value
     upload_session.completed_at = utcnow()
     file.status = FileStatus.READY.value
-    file.current_version_number = 1
+    file.current_version_number = upload_session.target_version_number
+    file.content_type = upload_session.target_content_type
+    file.size_bytes = upload_session.target_size_bytes
+    file.checksum_sha256 = upload_session.target_checksum_sha256
+    file.bucket = upload_session.bucket
+    file.object_key = upload_session.object_key
 
     db.add(
         FileVersionModel(
             file_id=file.id,
-            version_number=1,
-            bucket=file.bucket,
-            object_key=file.object_key,
-            size_bytes=file.size_bytes,
-            checksum_sha256=file.checksum_sha256,
+            version_number=upload_session.target_version_number,
+            bucket=upload_session.bucket,
+            object_key=upload_session.object_key,
+            size_bytes=upload_session.target_size_bytes,
+            checksum_sha256=upload_session.target_checksum_sha256,
             etag=etag,
         )
     )
@@ -195,7 +249,7 @@ def abort_upload(
     storage.abort_multipart_upload(upload_session.object_key, upload_session.provider_upload_id)
     upload_session.status = UploadStatus.ABORTED.value
     file = db.get(FileModel, upload_session.file_id)
-    if file is not None:
+    if file is not None and file.current_version_number == 0:
         file.status = FileStatus.FAILED.value
     write_audit(
         db,
@@ -217,14 +271,64 @@ def get_upload_status(
 ) -> UploadSessionModel:
     upload_session = db.get(UploadSessionModel, upload_session_id)
     if upload_session is None or upload_session.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Upload session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload session not found",
+        )
     return upload_session
 
 
 def ensure_active_upload(db: Session, upload_session_id: str, owner_id: str) -> UploadSessionModel:
     upload_session = db.get(UploadSessionModel, upload_session_id)
     if upload_session is None or upload_session.owner_id != owner_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Upload session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload session not found",
+        )
     if upload_session.status != UploadStatus.ACTIVE.value:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Upload session is not active")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Upload session is not active",
+        )
     return upload_session
+
+
+def create_upload_session(
+    file: FileModel,
+    owner_id: str,
+    provider_upload_id: str,
+    object_key: str,
+    target_version_number: int,
+    content_type: str,
+    size_bytes: int,
+    checksum_sha256: str | None,
+    total_parts: int,
+) -> UploadSessionModel:
+    return UploadSessionModel(
+        file_id=file.id,
+        owner_id=owner_id,
+        provider_upload_id=provider_upload_id,
+        bucket=settings.s3_bucket_name,
+        object_key=object_key,
+        target_version_number=target_version_number,
+        target_content_type=content_type,
+        target_size_bytes=size_bytes,
+        target_checksum_sha256=checksum_sha256,
+        part_size=settings.upload_part_size,
+        total_parts=total_parts,
+        status=UploadStatus.ACTIVE.value,
+        expires_at=utcnow() + timedelta(hours=24),
+    )
+
+
+def upload_initiate_response(upload_session: UploadSessionModel) -> UploadInitiateResponse:
+    return UploadInitiateResponse(
+        upload_session_id=upload_session.id,
+        file_id=upload_session.file_id,
+        provider_upload_id=upload_session.provider_upload_id,
+        bucket=upload_session.bucket,
+        object_key=upload_session.object_key,
+        target_version_number=upload_session.target_version_number,
+        part_size=upload_session.part_size,
+        total_parts=upload_session.total_parts,
+    )

@@ -125,17 +125,21 @@ document.querySelector("#uploadForm").addEventListener("submit", async (event) =
   }
 });
 
-async function uploadLargeFile(file) {
+async function uploadLargeFile(file, options = {}) {
   progressBar.style.width = "0%";
   uploadStatus.textContent = "Создание сессии загрузки...";
 
-  const session = await api("/uploads/initiate", {
+  const initiateBody = {
+    size_bytes: file.size,
+    content_type: file.type || "application/octet-stream",
+  };
+  if (!options.omitFilename) {
+    initiateBody.filename = file.name;
+  }
+
+  const session = await api(options.initiatePath || "/uploads/initiate", {
     method: "POST",
-    body: JSON.stringify({
-      filename: file.name,
-      size_bytes: file.size,
-      content_type: file.type || "application/octet-stream",
-    }),
+    body: JSON.stringify(initiateBody),
   });
 
   const completedParts = [];
@@ -192,14 +196,37 @@ async function loadFiles() {
       row.innerHTML = `
         <div>
           <div class="fileName"></div>
-          <div class="fileMeta">${formatSize(file.size_bytes)} · ${file.status}</div>
+          <div class="fileMeta">${formatSize(file.size_bytes)} · v${file.current_version_number} · ${file.status}</div>
         </div>
         <button class="ghost download">Скачать</button>
         <button class="ghost share">Ссылка</button>
+        <button class="ghost version">Новая версия</button>
+        <input class="versionInput hidden" type="file">
       `;
       row.querySelector(".fileName").textContent = file.name;
       row.querySelector(".download").addEventListener("click", () => downloadFile(file.id));
       row.querySelector(".share").addEventListener("click", () => createShare(file.id));
+      const versionInput = row.querySelector(".versionInput");
+      row.querySelector(".version").addEventListener("click", () => versionInput.click());
+      versionInput.addEventListener("change", async () => {
+        const versionFile = versionInput.files[0];
+        if (!versionFile) {
+          return;
+        }
+        try {
+          await uploadLargeFile(versionFile, {
+            initiatePath: `/files/${file.id}/versions/uploads`,
+            omitFilename: true,
+          });
+          await loadFiles();
+          showToast("Новая версия загружена");
+        } catch (error) {
+          showToast(error.message);
+          uploadStatus.textContent = error.message;
+        } finally {
+          versionInput.value = "";
+        }
+      });
       fileList.appendChild(row);
     }
   } catch (error) {
@@ -242,4 +269,3 @@ function formatSize(bytes) {
 }
 
 updateMode();
-

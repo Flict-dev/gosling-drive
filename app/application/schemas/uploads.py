@@ -11,12 +11,19 @@ class UploadInitiateRequest(BaseModel):
     checksum_sha256: str | None = Field(default=None, min_length=64, max_length=64)
 
 
+class UploadVersionInitiateRequest(BaseModel):
+    size_bytes: int = Field(gt=0)
+    content_type: str = Field(default="application/octet-stream", max_length=255)
+    checksum_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+
+
 class UploadInitiateResponse(BaseModel):
     upload_session_id: str
     file_id: str
     provider_upload_id: str
     bucket: str
     object_key: str
+    target_version_number: int
     part_size: int
     total_parts: int
 
@@ -52,6 +59,10 @@ class UploadSessionRead(BaseModel):
     provider_upload_id: str
     bucket: str
     object_key: str
+    target_version_number: int
+    target_content_type: str
+    target_size_bytes: int
+    target_checksum_sha256: str | None
     part_size: int
     total_parts: int
     status: str
@@ -60,4 +71,3 @@ class UploadSessionRead(BaseModel):
     expires_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
-

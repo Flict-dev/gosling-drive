@@ -27,20 +27,26 @@ class S3Storage:
             self._internal.head_bucket(Bucket=self.bucket)
         except ClientError:
             self._internal.create_bucket(Bucket=self.bucket)
-        self._internal.put_bucket_cors(
-            Bucket=self.bucket,
-            CORSConfiguration={
-                "CORSRules": [
-                    {
-                        "AllowedOrigins": ["http://localhost:8000", "http://127.0.0.1:8000"],
-                        "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
-                        "AllowedHeaders": ["*"],
-                        "ExposeHeaders": ["ETag", "x-amz-request-id"],
-                        "MaxAgeSeconds": 3000,
-                    }
-                ]
-            },
-        )
+        try:
+            self._internal.put_bucket_cors(
+                Bucket=self.bucket,
+                CORSConfiguration={
+                    "CORSRules": [
+                        {
+                            "AllowedOrigins": [
+                                "http://localhost:8000",
+                                "http://127.0.0.1:8000",
+                            ],
+                            "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+                            "AllowedHeaders": ["*"],
+                            "ExposeHeaders": ["ETag", "x-amz-request-id"],
+                            "MaxAgeSeconds": 3000,
+                        }
+                    ]
+                },
+            )
+        except ClientError:
+            pass
 
     def create_multipart_upload(self, object_key: str, content_type: str) -> str:
         response = self._internal.create_multipart_upload(
@@ -111,4 +117,3 @@ def normalize_etag(etag: str) -> str:
 
 
 storage = S3Storage()
-

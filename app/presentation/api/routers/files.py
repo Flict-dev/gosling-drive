@@ -2,17 +2,33 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.application.schemas.files import FileDownloadUrl, FileRead, FileUpdate, StorageStats
-from app.application.schemas.uploads import UploadInitiateRequest, UploadInitiateResponse
+from app.application.schemas.files import (
+    FileDownloadUrl,
+    FileRead,
+    FileUpdate,
+    FileVersionRead,
+    StorageStats,
+)
+from app.application.schemas.uploads import (
+    UploadInitiateRequest,
+    UploadInitiateResponse,
+    UploadVersionInitiateRequest,
+)
 from app.application.services.audit import write_audit
 from app.application.services.permissions import can_read_file, can_write_file
 from app.core.config import settings
 from app.domain.entities.enums import FileStatus
-from app.infrastructure.database.models import AccessGrantModel, FileModel, FolderModel, UserModel
+from app.infrastructure.database.models import (
+    AccessGrantModel,
+    FileModel,
+    FileVersionModel,
+    FolderModel,
+    UserModel,
+)
 from app.infrastructure.database.session import get_db
 from app.infrastructure.storage.s3 import storage
 from app.presentation.api.dependencies import get_current_user
-from app.presentation.api.routers.uploads import initiate_upload
+from app.presentation.api.routers.uploads import initiate_upload, initiate_version_upload
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -132,23 +148,29 @@ def delete_file(
     db.commit()
 
 
-@router.get("/{file_id}/versions", response_model=list[dict])
+@router.post(
+    "/{file_id}/versions/uploads",
+    response_model=UploadInitiateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def initiate_file_version_upload(
+    file_id: str,
+    payload: UploadVersionInitiateRequest,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+) -> UploadInitiateResponse:
+    file = ensure_writable_file(db, file_id, current_user)
+    return initiate_version_upload(file, payload, db, current_user)
+
+
+@router.get("/{file_id}/versions", response_model=list[FileVersionRead])
 def list_versions(
     file_id: str,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
-) -> list[dict]:
+) -> list[FileVersionModel]:
     file = ensure_readable_file(db, file_id, current_user)
-    return [
-        {
-            "id": version.id,
-            "version_number": version.version_number,
-            "size_bytes": version.size_bytes,
-            "etag": version.etag,
-            "created_at": version.created_at,
-        }
-        for version in file.versions
-    ]
+    return sorted(file.versions, key=lambda version: version.version_number)
 
 
 @router.get("/stats/me", response_model=StorageStats)
@@ -182,4 +204,3 @@ def ensure_writable_file(db: Session, file_id: str, user: UserModel) -> FileMode
 def ensure_file_ready(file: FileModel) -> None:
     if file.status != FileStatus.READY.value:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="File is not ready")
-

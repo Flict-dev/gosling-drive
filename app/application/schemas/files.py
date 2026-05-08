@@ -31,7 +31,19 @@ class FileDownloadUrl(BaseModel):
     expires_in_seconds: int
 
 
+class FileVersionRead(BaseModel):
+    id: str
+    version_number: int
+    bucket: str
+    object_key: str
+    size_bytes: int
+    checksum_sha256: str | None
+    etag: str | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class StorageStats(BaseModel):
     files_count: int
     total_size_bytes: int
-

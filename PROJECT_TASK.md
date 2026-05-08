@@ -521,3 +521,111 @@ Backend должен быть доступен:
 Ограничение:
 
 - полный Docker-запуск по-прежнему не проверен, потому что Docker daemon на машине не запущен.
+
+### 08.05.2026 - версии файлов и API-тесты upload flow
+
+Выполнено:
+
+- реализован endpoint `POST /api/files/{file_id}/versions/uploads` для начала multipart-загрузки новой версии существующего файла;
+- upload-сессия расширена целевыми метаданными:
+  - номер версии;
+  - MIME-тип;
+  - размер;
+  - SHA-256 checksum;
+- добавлена миграция Alembic `20260508_0002_upload_session_version_metadata.py`;
+- завершение upload-сессии теперь создает `FileVersionModel` с нужным номером версии и обновляет текущие метаданные файла;
+- отмена загрузки новой версии больше не переводит уже готовый файл в состояние `failed`;
+- список версий переведен на типизированную схему `FileVersionRead`;
+- web-интерфейс дополнен загрузкой новой версии файла из строки файлового списка;
+- тестовая инфраструктура расширена `httpx` для `FastAPI TestClient`;
+- добавлены API-тесты с временной SQLite-базой и fake S3 storage:
+  - регистрация;
+  - вход;
+  - отказ при неверном пароле;
+  - создание папки;
+  - начало multipart-загрузки;
+  - получение presigned URL частей;
+  - завершение загрузки;
+  - список файлов;
+  - ссылка скачивания;
+  - публичная ссылка;
+  - публичное скачивание;
+  - загрузка новой версии;
+  - список версий;
+  - статистика хранилища;
+  - запрет версии без write-доступа;
+  - read-доступ без права записи;
+  - отмена загрузки новой версии;
+- добавлен unit-тест на хеширование и проверку длинного пароля;
+- исправлено хеширование паролей: вместо `passlib` используется прямой `bcrypt` с SHA-256 prehash, так как `passlib` падал с установленным `bcrypt 5` на Python 3.14.
+
+Проверено:
+
+- `uv run pytest` - 6 тестов пройдены;
+- `uv run python -m compileall app alembic tests` - успешно;
+- OpenAPI-схема строится, сейчас в приложении 27 API paths;
+- endpoint `/api/files/{file_id}/versions/uploads` присутствует в OpenAPI;
+- `uv run alembic upgrade head --sql` - успешно генерирует SQL для двух миграций;
+- `docker-compose config` - успешно.
+
+Ограничение:
+
+- `docker-compose up -d --build` и реальная загрузка в MinIO по-прежнему не проверены, потому что Docker daemon `colima` не запущен.
+
+Следующий шаг:
+
+1. Запустить Docker daemon / Colima.
+2. Выполнить `docker-compose up -d --build`.
+3. Прогнать Alembic против PostgreSQL.
+4. Проверить реальную browser -> MinIO multipart-загрузку.
+5. Сделать скриншоты для отчета.
+6. Начать отчет по ГОСТ после Docker-проверки.
+
+### 08.05.2026 - Docker и реальная MinIO-проверка
+
+Выполнено:
+
+- запущен Docker daemon через `colima start`;
+- исправлен конфликт локального volume PostgreSQL:
+  - старый `cursach_postgres_data` был инициализирован PostgreSQL 13;
+  - compose использует PostgreSQL 16;
+  - добавлен новый volume `postgres16_data`, чтобы не удалять старые данные;
+- backend успешно собран через `docker-compose up -d --build`;
+- PostgreSQL поднят отдельным контейнером и находится в состоянии `healthy`;
+- MinIO поднят отдельным контейнером на портах `9000` и `9001`;
+- `minio-init` создает bucket `gosling-drive`;
+- CORS для MinIO переведен на переменную `MINIO_API_CORS_ALLOW_ORIGIN`;
+- установка bucket CORS из backend сделана нефатальной, потому что текущая MinIO/S3-связка отвечает `NotImplemented` на `PutBucketCors`;
+- backend успешно стартует на `localhost:8000`;
+- Alembic внутри backend-контейнера применен до `20260508_0002 (head)`;
+- выполнена настоящая end-to-end проверка:
+  - регистрация пользователя;
+  - вход и получение JWT;
+  - инициализация multipart upload;
+  - получение presigned URL для части;
+  - CORS preflight к MinIO;
+  - прямой `PUT` части в MinIO;
+  - завершение multipart upload;
+  - загрузка новой версии файла;
+  - скачивание актуальной версии;
+  - создание публичной ссылки;
+  - скачивание по публичной ссылке;
+  - проверка списка версий `[1, 2]`.
+
+Проверено:
+
+- `docker-compose up -d --build` - успешно;
+- `docker-compose ps` - backend, postgres и minio запущены;
+- `curl http://localhost:8000/health` - `{"status":"ok"}`;
+- `docker-compose exec -T backend alembic current` - `20260508_0002 (head)`;
+- OpenAPI внутри контейнера строится, сейчас 27 API paths;
+- `/docs` доступен;
+- CORS preflight для presigned MinIO URL возвращает `204`;
+- `Access-Control-Allow-Origin` возвращает `http://localhost:8000`;
+- публичное скачивание возвращает байты актуальной второй версии файла.
+
+Следующий шаг:
+
+1. Визуально проверить web-интерфейс в браузере.
+2. Сделать скриншоты UI, Swagger, MinIO Console и успешных сценариев для отчета.
+3. Начать отчет по ГОСТ 7.32-2017 на основе `Текст.docx`.

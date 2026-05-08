@@ -69,3 +69,14 @@ Run an import/OpenAPI smoke check:
 ```bash
 uv run python -c "from app.main import app; print(len(app.openapi()['paths']))"
 ```
+
+## Version Uploads
+
+Create a new version of an existing file through the same direct-to-MinIO
+multipart flow:
+
+```text
+POST /api/files/{file_id}/versions/uploads
+POST /api/uploads/{upload_session_id}/parts
+POST /api/uploads/{upload_session_id}/complete
+```
