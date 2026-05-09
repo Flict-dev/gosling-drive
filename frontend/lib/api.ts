@@ -75,9 +75,11 @@ export type FileRead = {
 
 export type FolderRead = {
   id: string;
+  owner_id: string;
   name: string;
   parent_id: string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type LoginResponse = { access_token: string; token_type: string };

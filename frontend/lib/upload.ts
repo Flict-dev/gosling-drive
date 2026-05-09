@@ -5,6 +5,7 @@ import {
 } from "@/lib/api";
 
 type UploadOptions = {
+  folderId?: string | null;
   initiatePath?: string;
   omitFilename?: boolean;
   onProgress?: (percent: number) => void;
@@ -22,6 +23,9 @@ export async function uploadLargeFile(
   };
   if (!options.omitFilename) {
     initiateBody.filename = file.name;
+  }
+  if (options.folderId) {
+    initiateBody.folder_id = options.folderId;
   }
 
   const session = await api<UploadInitiateResponse>(

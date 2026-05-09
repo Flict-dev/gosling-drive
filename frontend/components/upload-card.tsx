@@ -26,10 +26,16 @@ import { Spinner } from "@/components/ui/spinner";
 import { uploadLargeFile } from "@/lib/upload";
 
 type UploadCardProps = {
+  folderId: string | null;
+  folderName: string;
   onUploaded: () => void;
 };
 
-export function UploadCard({ onUploaded }: UploadCardProps) {
+export function UploadCard({
+  folderId,
+  folderName,
+  onUploaded,
+}: UploadCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -47,6 +53,7 @@ export function UploadCard({ onUploaded }: UploadCardProps) {
     setStatusText("Создание сессии...");
     try {
       await uploadLargeFile(file, {
+        folderId,
         onProgress: (percent) => {
           setProgress(percent);
           setStatusText(`${percent}%`);
@@ -71,7 +78,7 @@ export function UploadCard({ onUploaded }: UploadCardProps) {
       <CardHeader>
         <CardTitle>Загрузка</CardTitle>
         <CardDescription>
-          Файл уходит напрямую в MinIO multipart-частями
+          Текущая папка: {folderName}
         </CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
@@ -88,7 +95,7 @@ export function UploadCard({ onUploaded }: UploadCardProps) {
                 required
               />
               <FieldDescription>
-                Большие файлы загружаются multipart-частями.
+                Файл уходит напрямую в MinIO multipart-частями.
               </FieldDescription>
             </Field>
           </FieldGroup>

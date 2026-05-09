@@ -19,10 +19,16 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
 type FolderCardProps = {
+  parentId: string | null;
+  parentName: string;
   onCreated: () => void;
 };
 
-export function FolderCard({ onCreated }: FolderCardProps) {
+export function FolderCard({
+  parentId,
+  parentName,
+  onCreated,
+}: FolderCardProps) {
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -30,10 +36,16 @@ export function FolderCard({ onCreated }: FolderCardProps) {
     setPending(true);
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const payload: Record<string, unknown> = {
+      name: String(formData.get("name") ?? ""),
+    };
+    if (parentId) {
+      payload.parent_id = parentId;
+    }
     try {
       await api("/folders/", {
         method: "POST",
-        body: JSON.stringify(Object.fromEntries(formData)),
+        body: JSON.stringify(payload),
       });
       toast.success("Папка создана");
       form.reset();
@@ -51,7 +63,7 @@ export function FolderCard({ onCreated }: FolderCardProps) {
     <Card>
       <CardHeader>
         <CardTitle>Папка</CardTitle>
-        <CardDescription>Создать новую папку в корне</CardDescription>
+        <CardDescription>Создать новую папку в: {parentName}</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent>

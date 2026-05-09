@@ -168,6 +168,11 @@ def test_auth_file_share_and_version_upload_flow(api_client) -> None:
     file_id = file_payload["id"]
     assert file_payload["status"] == "ready"
     assert file_payload["current_version_number"] == 1
+    assert file_payload["folder_id"] == folder_response.json()["id"]
+
+    root_list_response = client.get("/api/files/", headers=auth(token))
+    assert root_list_response.status_code == 200
+    assert root_list_response.json() == []
 
     list_response = client.get(
         "/api/files/",

@@ -1,17 +1,26 @@
 "use client";
 
-import { type ChangeEvent, useRef, useState } from "react";
+import { Fragment, type ChangeEvent, useRef, useState } from "react";
 import {
+  ArrowUp,
+  ChevronRight,
   Download,
   FileIcon,
+  Folder,
   FolderOpen,
+  Home,
   History,
   Link as LinkIcon,
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { api, type FileRead, type ShareLinkRead } from "@/lib/api";
+import {
+  api,
+  type FileRead,
+  type FolderRead,
+  type ShareLinkRead,
+} from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,52 +51,81 @@ import { uploadLargeFile } from "@/lib/upload";
 import { formatBytes, formatDateTime } from "@/lib/utils";
 
 type FileListProps = {
+  folders: FolderRead[];
   files: FileRead[];
+  currentPath: Pick<FolderRead, "id" | "name">[];
+  onGoUp: () => void;
+  onNavigatePath: (index: number) => void;
+  onOpenFolder: (folder: FolderRead) => void;
   onRefresh: () => void;
   loading?: boolean;
 };
 
-export function FileList({ files, onRefresh, loading }: FileListProps) {
-  const showSkeleton = loading && files.length === 0;
+export function FileList({
+  folders,
+  files,
+  currentPath,
+  onGoUp,
+  onNavigatePath,
+  onOpenFolder,
+  onRefresh,
+  loading,
+}: FileListProps) {
+  const totalItems = folders.length + files.length;
+  const showSkeleton = loading && totalItems === 0;
 
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1.5">
           <CardTitle className="flex items-center gap-2">
-            Файлы
-            <Badge variant="secondary">{files.length}</Badge>
+            Мой диск
+            <Badge variant="secondary">{totalItems}</Badge>
           </CardTitle>
           <CardDescription>
-            Скачивание, публичные ссылки и загрузка новых версий.
+            Папки, файлы и действия в текущей директории.
           </CardDescription>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          disabled={loading}
-        >
-          {loading ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <RefreshCw data-icon="inline-start" />
-          )}
-          Обновить
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onGoUp}
+            disabled={loading || currentPath.length === 0}
+          >
+            <ArrowUp data-icon="inline-start" />
+            Вверх
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            disabled={loading}
+          >
+            {loading ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <RefreshCw data-icon="inline-start" />
+            )}
+            Обновить
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
+        <FolderBreadcrumb path={currentPath} onNavigate={onNavigatePath} />
         {showSkeleton ? (
           <FileTableSkeleton />
-        ) : files.length === 0 ? (
+        ) : totalItems === 0 ? (
           <Empty className="border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <FolderOpen />
               </EmptyMedia>
-              <EmptyTitle>Файлов пока нет</EmptyTitle>
+              <EmptyTitle>
+                {currentPath.length > 0 ? "Папка пуста" : "Диск пуст"}
+              </EmptyTitle>
               <EmptyDescription>
-                Загрузите первый файл, чтобы он появился в хранилище.
+                Создайте папку или загрузите файл.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -104,6 +142,13 @@ export function FileList({ files, onRefresh, loading }: FileListProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {folders.map((folder) => (
+                <FolderRow
+                  key={folder.id}
+                  folder={folder}
+                  onOpen={onOpenFolder}
+                />
+              ))}
               {files.map((file) => (
                 <FileRow key={file.id} file={file} onChanged={onRefresh} />
               ))}
@@ -112,6 +157,73 @@ export function FileList({ files, onRefresh, loading }: FileListProps) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function FolderBreadcrumb({
+  path,
+  onNavigate,
+}: {
+  path: Pick<FolderRead, "id" | "name">[];
+  onNavigate: (index: number) => void;
+}) {
+  return (
+    <div className="flex min-h-10 flex-wrap items-center gap-1 rounded-md border px-2 py-1">
+      <Button variant="ghost" size="sm" onClick={() => onNavigate(-1)}>
+        <Home data-icon="inline-start" />
+        Мой диск
+      </Button>
+      {path.map((folder, index) => (
+        <Fragment key={folder.id}>
+          <ChevronRight className="text-muted-foreground" />
+          <Button variant="ghost" size="sm" onClick={() => onNavigate(index)}>
+            {folder.name}
+          </Button>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+function FolderRow({
+  folder,
+  onOpen,
+}: {
+  folder: FolderRead;
+  onOpen: (folder: FolderRead) => void;
+}) {
+  return (
+    <TableRow className="cursor-pointer" onDoubleClick={() => onOpen(folder)}>
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <Folder />
+          </span>
+          <div className="min-w-0">
+            <div className="truncate font-medium">{folder.name}</div>
+            <div className="text-xs text-muted-foreground md:hidden">
+              Папка
+            </div>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell">—</TableCell>
+      <TableCell className="hidden lg:table-cell">—</TableCell>
+      <TableCell className="hidden lg:table-cell">
+        {formatDateTime(folder.created_at)}
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline">Папка</Badge>
+      </TableCell>
+      <TableCell>
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => onOpen(folder)}>
+            <FolderOpen data-icon="inline-start" />
+            Открыть
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 }
 
