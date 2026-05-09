@@ -1,6 +1,12 @@
 "use client";
 
-import { Fragment, type ChangeEvent, useRef, useState } from "react";
+import {
+  Fragment,
+  type ChangeEvent,
+  type ReactNode,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowUp,
   ChevronRight,
@@ -12,6 +18,7 @@ import {
   History,
   Link as LinkIcon,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,6 +65,7 @@ type FileListProps = {
   onNavigatePath: (index: number) => void;
   onOpenFolder: (folder: FolderRead) => void;
   onRefresh: () => void;
+  addAction?: ReactNode;
   loading?: boolean;
 };
 
@@ -69,6 +77,7 @@ export function FileList({
   onNavigatePath,
   onOpenFolder,
   onRefresh,
+  addAction,
   loading,
 }: FileListProps) {
   const totalItems = folders.length + files.length;
@@ -87,6 +96,7 @@ export function FileList({
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
+          {addAction}
           <Button
             variant="outline"
             size="sm"
@@ -193,7 +203,19 @@ function FolderRow({
   onOpen: (folder: FolderRead) => void;
 }) {
   return (
-    <TableRow className="cursor-pointer" onDoubleClick={() => onOpen(folder)}>
+    <TableRow
+      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      role="button"
+      tabIndex={0}
+      aria-label={`Открыть папку ${folder.name}`}
+      onClick={() => onOpen(folder)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(folder);
+        }
+      }}
+    >
       <TableCell>
         <div className="flex items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -215,14 +237,7 @@ function FolderRow({
       <TableCell>
         <Badge variant="outline">Папка</Badge>
       </TableCell>
-      <TableCell>
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={() => onOpen(folder)}>
-            <FolderOpen data-icon="inline-start" />
-            Открыть
-          </Button>
-        </div>
-      </TableCell>
+      <TableCell />
     </TableRow>
   );
 }
@@ -236,6 +251,7 @@ function FileRow({
 }) {
   const versionInputRef = useRef<HTMLInputElement>(null);
   const [versionPending, setVersionPending] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
 
   async function onDownload() {
     try {
@@ -289,6 +305,22 @@ function FileRow({
     }
   }
 
+  async function onDelete() {
+    const confirmed = window.confirm(`Удалить файл "${file.name}"?`);
+    if (!confirmed) return;
+
+    setDeletePending(true);
+    try {
+      await api(`/files/${file.id}`, { method: "DELETE" });
+      toast.success("Файл удалён");
+      onChanged();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ошибка удаления");
+    } finally {
+      setDeletePending(false);
+    }
+  }
+
   return (
     <TableRow>
       <TableCell>
@@ -317,7 +349,7 @@ function FileRow({
         <StatusBadge status={file.status} />
       </TableCell>
       <TableCell>
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" size="sm" onClick={onDownload}>
             <Download data-icon="inline-start" />
             Скачать
@@ -330,7 +362,7 @@ function FileRow({
             variant="outline"
             size="sm"
             onClick={onVersionPick}
-            disabled={versionPending}
+            disabled={versionPending || deletePending}
           >
             {versionPending ? (
               <Spinner data-icon="inline-start" />
@@ -338,6 +370,19 @@ function FileRow({
               <History data-icon="inline-start" />
             )}
             {versionPending ? "Загрузка..." : "Новая версия"}
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onDelete}
+            disabled={deletePending || versionPending}
+          >
+            {deletePending ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Trash2 data-icon="inline-start" />
+            )}
+            {deletePending ? "Удаление..." : "Удалить"}
           </Button>
           <input
             ref={versionInputRef}

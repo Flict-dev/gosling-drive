@@ -11,12 +11,11 @@ import {
   type UserRead,
 } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
+import { AddResourceMenu } from "@/components/add-resource-menu";
 import { AuthForm } from "@/components/auth-form";
 import { FileList } from "@/components/file-list";
-import { FolderCard } from "@/components/folder-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Topbar } from "@/components/topbar";
-import { UploadCard } from "@/components/upload-card";
 import { toast } from "sonner";
 
 type Mode = "loading" | "guest" | "authed";
@@ -141,9 +140,9 @@ export function Dashboard() {
 
   if (mode === "guest") {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex min-h-screen flex-col">
         <Topbar user={null} />
-        <div className="flex justify-center pt-8">
+        <div className="mx-auto flex w-full max-w-[1680px] flex-1 justify-center px-4 py-8 sm:px-6 lg:px-8">
           <AuthForm onAuthenticated={bootstrap} />
         </div>
       </div>
@@ -151,43 +150,39 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-h-screen flex-col">
       <Topbar user={user} stats={stats} onLogout={handleLoggedOut} />
-      <div className="grid gap-6 md:grid-cols-2">
-        <UploadCard
-          folderId={currentFolderId}
-          folderName={currentFolderName}
-          onUploaded={refreshCurrentFolder}
-        />
-        <FolderCard
-          parentId={currentFolderId}
-          parentName={currentFolderName}
-          onCreated={refreshCurrentFolder}
+      <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <FileList
+          folders={folders}
+          files={files}
+          currentPath={currentPath}
+          loading={filesLoading}
+          addAction={
+            <AddResourceMenu
+              folderId={currentFolderId}
+              folderName={currentFolderName}
+              onChanged={refreshCurrentFolder}
+              disabled={filesLoading}
+            />
+          }
+          onGoUp={handleGoUp}
+          onNavigatePath={handleNavigatePath}
+          onOpenFolder={handleOpenFolder}
+          onRefresh={refreshCurrentFolder}
         />
       </div>
-      <FileList
-        folders={folders}
-        files={files}
-        currentPath={currentPath}
-        loading={filesLoading}
-        onGoUp={handleGoUp}
-        onNavigatePath={handleNavigatePath}
-        onOpenFolder={handleOpenFolder}
-        onRefresh={refreshCurrentFolder}
-      />
     </div>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      <Skeleton className="h-36 w-full" />
-      <div className="grid gap-6 md:grid-cols-2">
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-64 w-full" />
+    <div className="flex min-h-screen flex-col">
+      <Skeleton className="h-32 w-full rounded-none" />
+      <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <Skeleton className="h-80 w-full" />
       </div>
-      <Skeleton className="h-80 w-full" />
     </div>
   );
 }
