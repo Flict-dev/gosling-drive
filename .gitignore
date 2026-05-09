@@ -45,3 +45,6 @@ postgres_data/
 
 # Office temporary lock files
 ~$*
+
+# Local document artifacts
+*.docx
